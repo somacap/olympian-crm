@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { Suspense, useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 
 interface LogEntry {
@@ -18,7 +18,7 @@ interface LogEntry {
   message?: string;
 }
 
-export default function EnrichPage() {
+function EnrichContent() {
   const searchParams = useSearchParams();
   const ids = searchParams.get("ids")?.split(",").filter(Boolean) || [];
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -50,33 +50,25 @@ export default function EnrichPage() {
 
     const reader = res.body?.getReader();
     const decoder = new TextDecoder();
-
     if (!reader) return;
 
     let buffer = "";
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n\n");
       buffer = lines.pop() || "";
-
       for (const line of lines) {
         if (line.startsWith("data: ")) {
           try {
             const data = JSON.parse(line.slice(6));
             setLogs((prev) => [...prev, data]);
-            if (data.type === "complete") {
-              setSummary(data);
-            }
-          } catch {
-            // skip parse errors
-          }
+            if (data.type === "complete") setSummary(data);
+          } catch { /* skip */ }
         }
       }
     }
-
     setRunning(false);
   };
 
@@ -88,8 +80,7 @@ export default function EnrichPage() {
       case "not_found": return "❌";
       case "airtable_sync": return "📤";
       case "complete": return "🏁";
-      case "progress":
-        return entry.status === "searching" ? "🔍" : "⚠️";
+      case "progress": return entry.status === "searching" ? "🔍" : "⚠️";
       default: return "•";
     }
   };
@@ -118,24 +109,16 @@ export default function EnrichPage() {
         <div className="bg-white border rounded-lg p-6 mb-6">
           <div className="flex items-center gap-4 mb-4">
             <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={pushToAirtable}
-                onChange={(e) => setPushToAirtable(e.target.checked)}
-              />
+              <input type="checkbox" checked={pushToAirtable} onChange={(e) => setPushToAirtable(e.target.checked)} />
               Push found emails to Airtable
             </label>
           </div>
-          <button
-            onClick={startEnrichment}
-            className="bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700 text-sm font-medium"
-          >
+          <button onClick={startEnrichment} className="bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700 text-sm font-medium">
             Start Enrichment ({ids.length} people)
           </button>
         </div>
       )}
 
-      {/* Progress bar */}
       {(running || summary) && (
         <div className="mb-4">
           <div className="flex items-center justify-between text-sm text-gray-500 mb-1">
@@ -143,35 +126,21 @@ export default function EnrichPage() {
             <span>{currentIndex} / {ids.length}</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${ids.length > 0 ? (currentIndex / ids.length) * 100 : 0}%` }}
-            />
+            <div className="bg-purple-600 h-2 rounded-full transition-all duration-300" style={{ width: `${ids.length > 0 ? (currentIndex / ids.length) * 100 : 0}%` }} />
           </div>
         </div>
       )}
 
-      {/* Summary card */}
       {summary && (
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
           <div className="flex gap-8">
-            <div>
-              <span className="text-2xl font-bold text-purple-700">{summary.found}</span>
-              <span className="text-sm text-purple-600 ml-1">found</span>
-            </div>
-            <div>
-              <span className="text-2xl font-bold text-red-600">{summary.notFound}</span>
-              <span className="text-sm text-red-500 ml-1">not found</span>
-            </div>
-            <div>
-              <span className="text-2xl font-bold text-gray-600">{summary.total}</span>
-              <span className="text-sm text-gray-500 ml-1">total</span>
-            </div>
+            <div><span className="text-2xl font-bold text-purple-700">{summary.found}</span><span className="text-sm text-purple-600 ml-1">found</span></div>
+            <div><span className="text-2xl font-bold text-red-600">{summary.notFound}</span><span className="text-sm text-red-500 ml-1">not found</span></div>
+            <div><span className="text-2xl font-bold text-gray-600">{summary.total}</span><span className="text-sm text-gray-500 ml-1">total</span></div>
           </div>
         </div>
       )}
 
-      {/* Live log */}
       {logs.length > 0 && (
         <div ref={logRef} className="border rounded-lg bg-white overflow-y-auto max-h-[500px]">
           {logs.map((entry, i) => (
@@ -190,10 +159,16 @@ export default function EnrichPage() {
       )}
 
       {!running && logs.length > 0 && (
-        <div className="mt-4">
-          <a href="/" className="text-sm text-blue-600 hover:underline">Back to People</a>
-        </div>
+        <div className="mt-4"><a href="/" className="text-sm text-blue-600 hover:underline">Back to People</a></div>
       )}
     </div>
+  );
+}
+
+export default function EnrichPage() {
+  return (
+    <Suspense fallback={<div className="py-8 text-center text-gray-400">Loading...</div>}>
+      <EnrichContent />
+    </Suspense>
   );
 }
