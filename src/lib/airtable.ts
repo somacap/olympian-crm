@@ -3,7 +3,7 @@ const BASE_ID = "appzO3diTm7xrL9nI";
 const OLYMPIANS_TABLE = "tblGQAg5t5OK6nvkh";
 
 const DEFAULT_TEMPLATE = (source: string) =>
-  `Congrats on a super impressive background. ${source} is exactly the kind of talent we love meeting. Love to hang and get to know you and see what you're thinking about these days, connect you w/ other world class founders and send some fun invites!
+  `Congrats on a super impressive background. ${source} alum is exactly the kind of talent we love meeting. Love to hang and get to know you and see what you're thinking about these days, connect you w/ other world class founders and send some fun invites!
 
 We own an NBA team the Sacramento Kings and host many fun events at sports games and dinners. We also thought you could be a candidate for Soma Fellows (https://programs.somacap.com/fellows) which gives up to 2m uncapped if you build something, or we can help shortcut your path to joining a generational tech co we invested in like OpenAI, Anthropic, Ramp, Cognition etc.
 
