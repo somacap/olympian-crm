@@ -17,6 +17,7 @@ interface Olympian {
   w26Status: string;
   spring26Outreach: string;
   spring26Status: string;
+  appearances: number;
 }
 
 interface ApiResponse {
@@ -24,6 +25,7 @@ interface ApiResponse {
   hasEmail: number;
   countries: string[];
   sources: string[];
+  years: number[];
   olympians: Olympian[];
 }
 
@@ -35,6 +37,9 @@ export default function PeoplePage() {
   const [source, setSource] = useState("");
   const [hasEmail, setHasEmail] = useState("");
   const [campaign, setCampaign] = useState("");
+  const [yearMin, setYearMin] = useState("");
+  const [yearMax, setYearMax] = useState("");
+  const [multiYear, setMultiYear] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const fetchData = useCallback(async () => {
@@ -45,11 +50,14 @@ export default function PeoplePage() {
     if (source) params.set("source", source);
     if (hasEmail) params.set("hasEmail", hasEmail);
     if (campaign) params.set("campaign", campaign);
+    if (yearMin) params.set("yearMin", yearMin);
+    if (yearMax) params.set("yearMax", yearMax);
+    if (multiYear) params.set("multiYear", "true");
     const res = await fetch(`/api/olympians?${params}`);
     const json = await res.json();
     setData(json);
     setLoading(false);
-  }, [q, country, source, hasEmail, campaign]);
+  }, [q, country, source, hasEmail, campaign, yearMin, yearMax, multiYear]);
 
   useEffect(() => {
     const t = setTimeout(fetchData, 300);
@@ -82,6 +90,12 @@ export default function PeoplePage() {
     });
     setSelected(new Set());
     fetchData();
+  };
+
+  const triggerEnrichment = async () => {
+    if (selected.size === 0) return;
+    const ids = Array.from(selected);
+    window.location.href = `/enrich?ids=${ids.join(",")}`;
   };
 
   return (
@@ -119,13 +133,41 @@ export default function PeoplePage() {
           <option value="spring26">Spring26 queued</option>
           <option value="none">Never contacted</option>
         </select>
+      </div>
+
+      {/* Year + Multi-year filters */}
+      <div className="flex flex-wrap gap-3 mb-4">
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-gray-500">Year:</span>
+          <select value={yearMin} onChange={(e) => setYearMin(e.target.value)} className="border rounded px-2 py-1.5 text-sm">
+            <option value="">From</option>
+            {data?.years.map((y) => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <span className="text-xs text-gray-400">to</span>
+          <select value={yearMax} onChange={(e) => setYearMax(e.target.value)} className="border rounded px-2 py-1.5 text-sm">
+            <option value="">To</option>
+            {data?.years.map((y) => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </div>
+        <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+          <input type="checkbox" checked={multiYear} onChange={(e) => setMultiYear(e.target.checked)} />
+          Multi-year only
+        </label>
         {selected.size > 0 && (
-          <button
-            onClick={markForCampaign}
-            className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700"
-          >
-            Queue {selected.size} for Spring26
-          </button>
+          <div className="flex gap-2 ml-auto">
+            <button
+              onClick={markForCampaign}
+              className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700"
+            >
+              Queue {selected.size} for Spring26
+            </button>
+            <button
+              onClick={triggerEnrichment}
+              className="bg-purple-600 text-white px-3 py-1.5 rounded text-sm hover:bg-purple-700"
+            >
+              Enrich {selected.size} emails
+            </button>
+          </div>
         )}
       </div>
 
@@ -157,7 +199,12 @@ export default function PeoplePage() {
                     <input type="checkbox" checked={selected.has(o.id)} onChange={() => toggleOne(o.id)} />
                   </td>
                   <td className="px-3 py-2 font-medium">
-                    {o.linkedin ? <a href={o.linkedin} target="_blank" className="text-blue-600 hover:underline">{o.name}</a> : o.name}
+                    <span className="flex items-center gap-1.5">
+                      {o.linkedin ? <a href={o.linkedin} target="_blank" className="text-blue-600 hover:underline">{o.name}</a> : o.name}
+                      {o.appearances > 1 && (
+                        <span className="bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-full font-normal">{o.appearances}x</span>
+                      )}
+                    </span>
                   </td>
                   <td className="px-3 py-2 text-gray-600">{o.email || <span className="text-gray-300">--</span>}</td>
                   <td className="px-3 py-2">{o.country}</td>
