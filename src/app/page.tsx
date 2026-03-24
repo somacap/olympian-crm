@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import EmailPreviewModal from "@/components/EmailPreviewModal";
 
 interface Olympian {
   id: string;
@@ -17,6 +18,7 @@ interface Olympian {
   w26Status: string;
   spring26Outreach: string;
   spring26Status: string;
+  spring26Body: string;
   appearances: number;
 }
 
@@ -41,6 +43,7 @@ export default function PeoplePage() {
   const [yearMax, setYearMax] = useState("");
   const [multiYear, setMultiYear] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [previewOlympian, setPreviewOlympian] = useState<Olympian | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -66,36 +69,40 @@ export default function PeoplePage() {
 
   const toggleAll = () => {
     if (!data) return;
-    if (selected.size === data.olympians.length) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(data.olympians.map((o) => o.id)));
-    }
+    if (selected.size === data.olympians.length) setSelected(new Set());
+    else setSelected(new Set(data.olympians.map((o) => o.id)));
   };
 
   const toggleOne = (id: string) => {
     const next = new Set(selected);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
+    if (next.has(id)) next.delete(id); else next.add(id);
     setSelected(next);
   };
 
   const markForCampaign = async () => {
     if (selected.size === 0) return;
-    const ids = Array.from(selected);
     await fetch("/api/campaigns", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "queue", ids, campaign: "Spring26 Fellows" }),
+      body: JSON.stringify({ action: "queue", ids: Array.from(selected), campaign: "Spring26 Fellows" }),
     });
     setSelected(new Set());
     fetchData();
   };
 
-  const triggerEnrichment = async () => {
+  const triggerEnrichment = () => {
     if (selected.size === 0) return;
-    const ids = Array.from(selected);
-    window.location.href = `/enrich?ids=${ids.join(",")}`;
+    window.location.href = `/enrich?ids=${Array.from(selected).join(",")}`;
+  };
+
+  const handleSaveCopy = async (id: string, customCopy: string) => {
+    await fetch("/api/olympians", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, spring26Outreach: customCopy }),
+    });
+    fetchData();
+    setPreviewOlympian(null);
   };
 
   return (
@@ -111,13 +118,7 @@ export default function PeoplePage() {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
-        <input
-          type="text"
-          placeholder="Search name, school, email..."
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="border rounded px-3 py-1.5 text-sm w-64"
-        />
+        <input type="text" placeholder="Search name, school, email..." value={q} onChange={(e) => setQ(e.target.value)} className="border rounded px-3 py-1.5 text-sm w-64" />
         <select value={hasEmail} onChange={(e) => setHasEmail(e.target.value)} className="border rounded px-2 py-1.5 text-sm">
           <option value="">All emails</option>
           <option value="true">Has email</option>
@@ -135,7 +136,6 @@ export default function PeoplePage() {
         </select>
       </div>
 
-      {/* Year + Multi-year filters */}
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="flex items-center gap-1">
           <span className="text-xs text-gray-500">Year:</span>
@@ -155,23 +155,16 @@ export default function PeoplePage() {
         </label>
         {selected.size > 0 && (
           <div className="flex gap-2 ml-auto">
-            <button
-              onClick={markForCampaign}
-              className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700"
-            >
+            <button onClick={markForCampaign} className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">
               Queue {selected.size} for Spring26
             </button>
-            <button
-              onClick={triggerEnrichment}
-              className="bg-purple-600 text-white px-3 py-1.5 rounded text-sm hover:bg-purple-700"
-            >
+            <button onClick={triggerEnrichment} className="bg-purple-600 text-white px-3 py-1.5 rounded text-sm hover:bg-purple-700">
               Enrich {selected.size} emails
             </button>
           </div>
         )}
       </div>
 
-      {/* Table */}
       {loading ? (
         <div className="text-gray-400 py-8 text-center">Loading...</div>
       ) : (
@@ -179,15 +172,14 @@ export default function PeoplePage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-3 py-2 text-left">
-                  <input type="checkbox" onChange={toggleAll} checked={data ? selected.size === data.olympians.length && data.olympians.length > 0 : false} />
-                </th>
+                <th className="px-3 py-2 text-left"><input type="checkbox" onChange={toggleAll} checked={data ? selected.size === data.olympians.length && data.olympians.length > 0 : false} /></th>
                 <th className="px-3 py-2 text-left">Name</th>
                 <th className="px-3 py-2 text-left">Email</th>
                 <th className="px-3 py-2 text-left">Country</th>
                 <th className="px-3 py-2 text-left">Source</th>
                 <th className="px-3 py-2 text-left">Year</th>
                 <th className="px-3 py-2 text-left">University</th>
+                <th className="px-3 py-2 text-left">Copy</th>
                 <th className="px-3 py-2 text-left">W26</th>
                 <th className="px-3 py-2 text-left">Spring26</th>
               </tr>
@@ -195,15 +187,11 @@ export default function PeoplePage() {
             <tbody>
               {data?.olympians.map((o) => (
                 <tr key={o.id} className="border-b hover:bg-gray-50">
-                  <td className="px-3 py-2">
-                    <input type="checkbox" checked={selected.has(o.id)} onChange={() => toggleOne(o.id)} />
-                  </td>
+                  <td className="px-3 py-2"><input type="checkbox" checked={selected.has(o.id)} onChange={() => toggleOne(o.id)} /></td>
                   <td className="px-3 py-2 font-medium">
                     <span className="flex items-center gap-1.5">
                       {o.linkedin ? <a href={o.linkedin} target="_blank" className="text-blue-600 hover:underline">{o.name}</a> : o.name}
-                      {o.appearances > 1 && (
-                        <span className="bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-full font-normal">{o.appearances}x</span>
-                      )}
+                      {o.appearances > 1 && <span className="bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-full font-normal">{o.appearances}x</span>}
                     </span>
                   </td>
                   <td className="px-3 py-2 text-gray-600">{o.email || <span className="text-gray-300">--</span>}</td>
@@ -211,6 +199,11 @@ export default function PeoplePage() {
                   <td className="px-3 py-2">{o.source}</td>
                   <td className="px-3 py-2">{o.year || ""}</td>
                   <td className="px-3 py-2 text-gray-600">{o.university}</td>
+                  <td className="px-3 py-2">
+                    <button onClick={() => setPreviewOlympian(o)} className="text-xs text-blue-600 hover:underline">
+                      {o.spring26Outreach ? "✏️ Custom" : "📄 Default"}
+                    </button>
+                  </td>
                   <td className="px-3 py-2">{o.w26Outreach ? "✅" : ""}</td>
                   <td className="px-3 py-2">{o.spring26Status || (o.spring26Outreach ? "Queued" : "")}</td>
                 </tr>
@@ -218,6 +211,14 @@ export default function PeoplePage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {previewOlympian && (
+        <EmailPreviewModal
+          olympian={previewOlympian}
+          onClose={() => setPreviewOlympian(null)}
+          onSave={handleSaveCopy}
+        />
       )}
     </div>
   );

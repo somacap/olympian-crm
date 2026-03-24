@@ -2,6 +2,15 @@ const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY!;
 const BASE_ID = "appzO3diTm7xrL9nI";
 const OLYMPIANS_TABLE = "tblGQAg5t5OK6nvkh";
 
+const DEFAULT_TEMPLATE = (source: string) =>
+  `Congrats on a super impressive background. ${source} is exactly the kind of talent we love meeting. Love to hang and get to know you and see what you're thinking about these days, connect you w/ other world class founders and send some fun invites!
+
+We own an NBA team the Sacramento Kings and host many fun events at sports games and dinners. We also thought you could be a candidate for Soma Fellows (https://programs.somacap.com/fellows) which gives up to 2m uncapped if you build something, or we can help shortcut your path to joining a generational tech co we invested in like OpenAI, Anthropic, Ramp, Cognition etc.
+
+The next Fellows deadline is April 1 so wanted to make sure this was on your radar.
+
+Thanks for taking a quick look. Hope for the great pleasure to meet you and hang soon! 650-714-6220 and of course feel free to share this w/ any friends you'd recommend`;
+
 export interface Olympian {
   id: string;
   name: string;
@@ -18,12 +27,15 @@ export interface Olympian {
   w26Status: string;
   spring26Outreach: string;
   spring26Status: string;
+  spring26Body: string;
   latestInteraction: string;
   meetingNotes: string;
 }
 
 function parseRecord(rec: Record<string, unknown>): Olympian {
   const f = rec.fields as Record<string, unknown>;
+  const spring26Outreach = (f["Spring26 Outreach"] as string) || "";
+  const source = (f["Source"] as string) || "";
   return {
     id: rec.id as string,
     name: (f["Name"] as string) || "",
@@ -33,13 +45,14 @@ function parseRecord(rec: Record<string, unknown>): Olympian {
     country: (f["Country"] as string) || "",
     university: (f["University"] as string) || "",
     year: (f["Year"] as number) || 0,
-    source: (f["Source"] as string) || "",
+    source,
     city: (f["City"] as string) || "",
     readyToSend: (f["Ready to send"] as boolean) || false,
     w26Outreach: (f["W26 Outreach"] as string) || "",
     w26Status: (f["W26 Status"] as string) || "",
-    spring26Outreach: (f["Spring26 Outreach"] as string) || "",
+    spring26Outreach,
     spring26Status: (f["Spring26 Status"] as string) || "",
+    spring26Body: spring26Outreach || DEFAULT_TEMPLATE(source),
     latestInteraction: (f["Latest Interaction"] as string) || "",
     meetingNotes: (f["Meeting Notes"] as string) || "",
   };
@@ -90,7 +103,6 @@ export async function updateOlympian(
 export async function batchUpdateOlympians(
   updates: { id: string; fields: Record<string, unknown> }[]
 ): Promise<void> {
-  // Airtable allows max 10 per batch
   for (let i = 0; i < updates.length; i += 10) {
     const batch = updates.slice(i, i + 10);
     await fetch(
