@@ -64,7 +64,8 @@ export async function GET(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const { id, spring26Outreach, personalEmail } = await req.json();
+  const body = await req.json();
+  const { id, spring26Outreach, personalEmail } = body;
   if (!id) return NextResponse.json({ error: "No ID" }, { status: 400 });
 
   const fields: Record<string, unknown> = {};
