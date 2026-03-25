@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import EmailPreviewModal from "@/components/EmailPreviewModal";
+import MultiSelect from "@/components/MultiSelect";
 
 interface Olympian {
   id: string;
@@ -39,24 +40,28 @@ type SortKey = "name" | "year" | "country" | "source" | "email";
 type SortDir = "asc" | "desc";
 type GroupKey = "" | "year" | "source" | "country";
 
+function parseMulti(param: string | null): string[] {
+  if (!param) return [];
+  return param.split(",").filter(Boolean);
+}
+
 function PeopleContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Initialize state from URL params
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState(searchParams.get("q") || "");
   const [country, setCountry] = useState(searchParams.get("country") || "");
-  const [source, setSource] = useState(searchParams.get("source") || "");
+  const [sources, setSources] = useState<string[]>(parseMulti(searchParams.get("source")));
   const [hasEmail, setHasEmail] = useState(searchParams.get("hasEmail") || "");
   const [campaign, setCampaign] = useState(searchParams.get("campaign") || "");
   const [yearMin, setYearMin] = useState(searchParams.get("yearMin") || "");
   const [yearMax, setYearMax] = useState(searchParams.get("yearMax") || "");
   const [multiYear, setMultiYear] = useState(searchParams.get("multiYear") === "true");
   const [exception, setException] = useState(searchParams.get("exception") || "false");
-  const [w26Status, setW26Status] = useState(searchParams.get("w26Status") || "");
-  const [spring26Status, setSpring26Status] = useState(searchParams.get("spring26Status") || "");
+  const [w26Statuses, setW26Statuses] = useState<string[]>(parseMulti(searchParams.get("w26Status")));
+  const [spring26Statuses, setSpring26Statuses] = useState<string[]>(parseMulti(searchParams.get("spring26Status")));
   const [sortKey, setSortKey] = useState<SortKey>((searchParams.get("sortKey") as SortKey) || "name");
   const [sortDir, setSortDir] = useState<SortDir>((searchParams.get("sortDir") as SortDir) || "asc");
   const [groupBy, setGroupBy] = useState<GroupKey>((searchParams.get("groupBy") as GroupKey) || "");
@@ -68,15 +73,15 @@ function PeopleContent() {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (country) params.set("country", country);
-    if (source) params.set("source", source);
+    if (sources.length) params.set("source", sources.join(","));
     if (hasEmail) params.set("hasEmail", hasEmail);
     if (campaign) params.set("campaign", campaign);
     if (yearMin) params.set("yearMin", yearMin);
     if (yearMax) params.set("yearMax", yearMax);
     if (multiYear) params.set("multiYear", "true");
     if (exception && exception !== "false") params.set("exception", exception);
-    if (w26Status) params.set("w26Status", w26Status);
-    if (spring26Status) params.set("spring26Status", spring26Status);
+    if (w26Statuses.length) params.set("w26Status", w26Statuses.join(","));
+    if (spring26Statuses.length) params.set("spring26Status", spring26Statuses.join(","));
     if (sortKey !== "name") params.set("sortKey", sortKey);
     if (sortDir !== "asc") params.set("sortDir", sortDir);
     if (groupBy) params.set("groupBy", groupBy);
@@ -84,27 +89,27 @@ function PeopleContent() {
     const paramStr = params.toString();
     const newUrl = paramStr ? `/?${paramStr}` : "/";
     router.replace(newUrl, { scroll: false });
-  }, [q, country, source, hasEmail, campaign, yearMin, yearMax, multiYear, exception, w26Status, spring26Status, sortKey, sortDir, groupBy, router]);
+  }, [q, country, sources, hasEmail, campaign, yearMin, yearMax, multiYear, exception, w26Statuses, spring26Statuses, sortKey, sortDir, groupBy, router]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (country) params.set("country", country);
-    if (source) params.set("source", source);
+    if (sources.length) params.set("source", sources.join(","));
     if (hasEmail) params.set("hasEmail", hasEmail);
     if (campaign) params.set("campaign", campaign);
     if (yearMin) params.set("yearMin", yearMin);
     if (yearMax) params.set("yearMax", yearMax);
     if (multiYear) params.set("multiYear", "true");
     if (exception) params.set("exception", exception);
-    if (w26Status) params.set("w26Status", w26Status);
-    if (spring26Status) params.set("spring26Status", spring26Status);
+    if (w26Statuses.length) params.set("w26Status", w26Statuses.join(","));
+    if (spring26Statuses.length) params.set("spring26Status", spring26Statuses.join(","));
     const res = await fetch(`/api/olympians?${params}`);
     const json = await res.json();
     setData(json);
     setLoading(false);
-  }, [q, country, source, hasEmail, campaign, yearMin, yearMax, multiYear, exception, w26Status, spring26Status]);
+  }, [q, country, sources, hasEmail, campaign, yearMin, yearMax, multiYear, exception, w26Statuses, spring26Statuses]);
 
   useEffect(() => {
     const t = setTimeout(fetchData, 300);
@@ -201,6 +206,26 @@ function PeopleContent() {
     setPreviewOlympian(null);
   };
 
+  // Build option lists for multi-selects
+  const sourceOptions = useMemo(() =>
+    (data?.sources || []).map((s) => ({ value: s, label: s })),
+    [data?.sources]
+  );
+
+  const w26Options = [
+    { value: "Sent Automation", label: "Sent Automation" },
+    { value: "none", label: "Not sent" },
+  ];
+
+  const spring26Options = [
+    { value: "Queued", label: "Queued" },
+    { value: "Sent", label: "Sent" },
+    { value: "Replied", label: "Replied" },
+    { value: "Meeting", label: "Meeting" },
+    { value: "Pass", label: "Pass" },
+    { value: "none", label: "Not set" },
+  ];
+
   const renderRow = (o: Olympian) => (
     <tr key={o.id} className="border-b hover:bg-gray-50">
       <td className="px-3 py-2"><input type="checkbox" checked={selected.has(o.id)} onChange={() => toggleOne(o.id)} /></td>
@@ -266,10 +291,7 @@ function PeopleContent() {
           <option value="true">Has email</option>
           <option value="false">No email</option>
         </select>
-        <select value={source} onChange={(e) => setSource(e.target.value)} className="border rounded px-2 py-1.5 text-sm">
-          <option value="">All sources</option>
-          {data?.sources.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
+        <MultiSelect label="Source" options={sourceOptions} selected={sources} onChange={setSources} />
         <select value={campaign} onChange={(e) => setCampaign(e.target.value)} className="border rounded px-2 py-1.5 text-sm">
           <option value="">All campaigns</option>
           <option value="w26">W26 sent</option>
@@ -281,20 +303,8 @@ function PeopleContent() {
           <option value="">All people</option>
           <option value="true">Exceptions only</option>
         </select>
-        <select value={w26Status} onChange={(e) => setW26Status(e.target.value)} className="border rounded px-2 py-1.5 text-sm">
-          <option value="">W26: Any</option>
-          <option value="Sent Automation">W26: Sent Automation</option>
-          <option value="none">W26: Not sent</option>
-        </select>
-        <select value={spring26Status} onChange={(e) => setSpring26Status(e.target.value)} className="border rounded px-2 py-1.5 text-sm">
-          <option value="">Spring26: Any</option>
-          <option value="Queued">Spring26: Queued</option>
-          <option value="Sent">Spring26: Sent</option>
-          <option value="Replied">Spring26: Replied</option>
-          <option value="Meeting">Spring26: Meeting</option>
-          <option value="Pass">Spring26: Pass</option>
-          <option value="none">Spring26: Not set</option>
-        </select>
+        <MultiSelect label="W26 Status" options={w26Options} selected={w26Statuses} onChange={setW26Statuses} />
+        <MultiSelect label="Spring26 Status" options={spring26Options} selected={spring26Statuses} onChange={setSpring26Statuses} />
       </div>
 
       <div className="flex flex-wrap gap-3 mb-4">

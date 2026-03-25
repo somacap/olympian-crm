@@ -36,7 +36,7 @@ export async function GET(req: Request) {
 
   if (q) filtered = filtered.filter((o) => o.name.toLowerCase().includes(q) || o.university?.toLowerCase().includes(q) || o.email?.toLowerCase().includes(q));
   if (country) filtered = filtered.filter((o) => o.country === country);
-  if (source) filtered = filtered.filter((o) => o.source === source);
+  if (source) { const srcList = source.split(","); filtered = filtered.filter((o) => srcList.includes(o.source)); }
   if (hasEmail === "true") filtered = filtered.filter((o) => !!o.email);
   if (hasEmail === "false") filtered = filtered.filter((o) => !o.email);
   if (campaign === "w26") filtered = filtered.filter((o) => !!o.w26Outreach);
@@ -49,10 +49,8 @@ export async function GET(req: Request) {
   if (hasCustomCopy === "true") filtered = filtered.filter((o) => !!o.spring26Outreach);
   if (hasCustomCopy === "false") filtered = filtered.filter((o) => !o.spring26Outreach);
   if (exception === "true") filtered = filtered.filter((o) => o.exception);
-  if (w26Status === "none") filtered = filtered.filter((o) => !o.w26Status);
-  else if (w26Status) filtered = filtered.filter((o) => o.w26Status === w26Status);
-  if (spring26Status === "none") filtered = filtered.filter((o) => !o.spring26Status);
-  else if (spring26Status) filtered = filtered.filter((o) => o.spring26Status === spring26Status);
+  if (w26Status) { const vals = w26Status.split(","); const hasNone = vals.includes("none"); const realVals = vals.filter(v => v !== "none"); filtered = filtered.filter((o) => (hasNone && !o.w26Status) || (realVals.length > 0 && realVals.includes(o.w26Status))); }
+  if (spring26Status) { const vals = spring26Status.split(","); const hasNone = vals.includes("none"); const realVals = vals.filter(v => v !== "none"); filtered = filtered.filter((o) => (hasNone && !o.spring26Status) || (realVals.length > 0 && realVals.includes(o.spring26Status))); }
   if (exception === "false") filtered = filtered.filter((o) => !o.exception);
 
   const countries = [...new Set(filtered.map((o) => o.country).filter(Boolean))].sort();
