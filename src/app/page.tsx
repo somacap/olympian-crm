@@ -254,8 +254,7 @@ export default function PeoplePage() {
         </select>
         <select value={w26Status} onChange={(e) => setW26Status(e.target.value)} className="border rounded px-2 py-1.5 text-sm">
           <option value="">W26: Any</option>
-          <option value="Sent">W26: Sent</option>
-          <option value="Replied">W26: Replied</option>
+          <option value="Sent Automation">W26: Sent Automation</option>
           <option value="none">W26: Not sent</option>
         </select>
         <select value={spring26Status} onChange={(e) => setSpring26Status(e.target.value)} className="border rounded px-2 py-1.5 text-sm">
