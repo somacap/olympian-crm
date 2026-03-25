@@ -8,7 +8,13 @@ export async function POST(req: Request) {
   const { action, ids, campaign } = body;
 
   if (action === "queue" && ids?.length) {
-    const updates = ids.map((id: string) => ({
+    // Filter out exceptions at API level
+    const allOlympians = await fetchAllOlympians();
+    const exceptionIds = new Set(allOlympians.filter((o) => o.exception).map((o) => o.id));
+    const validIds = ids.filter((id: string) => !exceptionIds.has(id));
+    const skippedCount = ids.length - validIds.length;
+
+    const updates = validIds.map((id: string) => ({
       id,
       fields: {
         "Spring26 Outreach": campaign || "Spring26 Fellows",
@@ -16,7 +22,7 @@ export async function POST(req: Request) {
       },
     }));
     await batchUpdateOlympians(updates);
-    return NextResponse.json({ ok: true, queued: ids.length });
+    return NextResponse.json({ ok: true, queued: validIds.length, skippedExceptions: skippedCount });
   }
 
   if (action === "mark-sent" && ids?.length) {

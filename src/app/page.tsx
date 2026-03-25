@@ -130,11 +130,15 @@ export default function PeoplePage() {
 
   const markForCampaign = async () => {
     if (selected.size === 0) return;
-    await fetch("/api/campaigns", {
+    const res = await fetch("/api/campaigns", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "queue", ids: Array.from(selected), campaign: "Spring26 Fellows" }),
     });
+    const result = await res.json();
+    if (result.skippedExceptions > 0) {
+      alert(`Queued ${result.queued} people. Skipped ${result.skippedExceptions} exceptions.`);
+    }
     setSelected(new Set());
     fetchData();
   };
