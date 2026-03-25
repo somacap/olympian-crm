@@ -34,6 +34,7 @@ export interface Olympian {
   city: string;
   readyToSend: boolean;
   exception: boolean;
+  exceptionNotes: string;
   w26Outreach: string;
   w26Status: string;
   spring26Outreach: string;
@@ -61,6 +62,7 @@ function parseRecord(rec: Record<string, unknown>): Olympian {
     city: (f["City"] as string) || "",
     readyToSend: (f["Ready to send"] as boolean) || false,
     exception: (f["Exception"] as boolean) || false,
+    exceptionNotes: (f["Exception Notes"] as string) || "",
     w26Outreach: (f["W26 Outreach"] as string) || "",
     w26Status: (f["W26 Status"] as string) || "",
     spring26Outreach,

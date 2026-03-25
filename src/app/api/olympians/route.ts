@@ -72,6 +72,7 @@ export async function PATCH(req: Request) {
   if (spring26Outreach !== undefined) fields["Spring26 Outreach"] = spring26Outreach || "";
   if (personalEmail !== undefined) fields["Personal Email"] = personalEmail;
   if (body.exception !== undefined) fields["Exception"] = body.exception;
+  if (body.exceptionNotes !== undefined) fields["Exception Notes"] = body.exceptionNotes;
 
   await updateOlympian(id, fields);
   return NextResponse.json({ ok: true });
