@@ -49,6 +49,8 @@ export default function PeoplePage() {
   const [yearMax, setYearMax] = useState("");
   const [multiYear, setMultiYear] = useState(false);
   const [exception, setException] = useState("false");
+  const [w26Status, setW26Status] = useState("");
+  const [spring26Status, setSpring26Status] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [previewOlympian, setPreviewOlympian] = useState<Olympian | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("name");
@@ -67,11 +69,13 @@ export default function PeoplePage() {
     if (yearMax) params.set("yearMax", yearMax);
     if (multiYear) params.set("multiYear", "true");
     if (exception) params.set("exception", exception);
+    if (w26Status) params.set("w26Status", w26Status);
+    if (spring26Status) params.set("spring26Status", spring26Status);
     const res = await fetch(`/api/olympians?${params}`);
     const json = await res.json();
     setData(json);
     setLoading(false);
-  }, [q, country, source, hasEmail, campaign, yearMin, yearMax, multiYear, exception]);
+  }, [q, country, source, hasEmail, campaign, yearMin, yearMax, multiYear, exception, w26Status, spring26Status]);
 
   useEffect(() => {
     const t = setTimeout(fetchData, 300);
@@ -247,6 +251,21 @@ export default function PeoplePage() {
           <option value="false">No exceptions</option>
           <option value="">All people</option>
           <option value="true">Exceptions only</option>
+        </select>
+        <select value={w26Status} onChange={(e) => setW26Status(e.target.value)} className="border rounded px-2 py-1.5 text-sm">
+          <option value="">W26: Any</option>
+          <option value="Sent">W26: Sent</option>
+          <option value="Replied">W26: Replied</option>
+          <option value="none">W26: Not sent</option>
+        </select>
+        <select value={spring26Status} onChange={(e) => setSpring26Status(e.target.value)} className="border rounded px-2 py-1.5 text-sm">
+          <option value="">Spring26: Any</option>
+          <option value="Queued">Spring26: Queued</option>
+          <option value="Sent">Spring26: Sent</option>
+          <option value="Replied">Spring26: Replied</option>
+          <option value="Meeting">Spring26: Meeting</option>
+          <option value="Pass">Spring26: Pass</option>
+          <option value="none">Spring26: Not set</option>
         </select>
       </div>
 

@@ -16,6 +16,8 @@ export async function GET(req: Request) {
   const multiYear = searchParams.get("multiYear");
   const hasCustomCopy = searchParams.get("hasCustomCopy");
   const exception = searchParams.get("exception");
+  const w26Status = searchParams.get("w26Status");
+  const spring26Status = searchParams.get("spring26Status");
 
   const allOlympians = await fetchAllOlympians();
 
@@ -47,6 +49,10 @@ export async function GET(req: Request) {
   if (hasCustomCopy === "true") filtered = filtered.filter((o) => !!o.spring26Outreach);
   if (hasCustomCopy === "false") filtered = filtered.filter((o) => !o.spring26Outreach);
   if (exception === "true") filtered = filtered.filter((o) => o.exception);
+  if (w26Status === "none") filtered = filtered.filter((o) => !o.w26Status);
+  else if (w26Status) filtered = filtered.filter((o) => o.w26Status === w26Status);
+  if (spring26Status === "none") filtered = filtered.filter((o) => !o.spring26Status);
+  else if (spring26Status) filtered = filtered.filter((o) => o.spring26Status === spring26Status);
   if (exception === "false") filtered = filtered.filter((o) => !o.exception);
 
   const countries = [...new Set(filtered.map((o) => o.country).filter(Boolean))].sort();
