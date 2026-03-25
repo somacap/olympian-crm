@@ -28,17 +28,23 @@ interface FoundResult {
 }
 
 function linkify(text: string) {
-  const urlRegex = /(https?:\/\/[^\s"]+)/g;
+  const urlRegex = /(https?:\/\/[^\s"<>]+)/g;
   const parts = text.split(urlRegex);
-  return parts.map((part, i) =>
-    urlRegex.test(part) ? (
-      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-800 break-all">
-        {part}
-      </a>
-    ) : (
-      <span key={i}>{part}</span>
-    )
-  );
+  return parts.map((part, i) => {
+    if (urlRegex.test(part)) {
+      const clean = part.replace(/[),.:;!?"']+$/, "");
+      const trailing = part.slice(clean.length);
+      return (
+        <span key={i}>
+          <a href={clean} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-800 break-all">
+            {clean}
+          </a>
+          {trailing}
+        </span>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
 }
 
 function EnrichContent() {
