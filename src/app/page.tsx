@@ -19,6 +19,7 @@ interface Olympian {
   spring26Outreach: string;
   spring26Status: string;
   spring26Body: string;
+  spring26BodyHtml: string;
   appearances: number;
   exception: boolean;
 }
