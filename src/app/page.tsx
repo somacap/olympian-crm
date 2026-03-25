@@ -20,6 +20,7 @@ interface Olympian {
   spring26Status: string;
   spring26Body: string;
   appearances: number;
+  exception: boolean;
 }
 
 interface ApiResponse {
@@ -46,6 +47,7 @@ export default function PeoplePage() {
   const [yearMin, setYearMin] = useState("");
   const [yearMax, setYearMax] = useState("");
   const [multiYear, setMultiYear] = useState(false);
+  const [exception, setException] = useState("false");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [previewOlympian, setPreviewOlympian] = useState<Olympian | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("name");
@@ -63,11 +65,12 @@ export default function PeoplePage() {
     if (yearMin) params.set("yearMin", yearMin);
     if (yearMax) params.set("yearMax", yearMax);
     if (multiYear) params.set("multiYear", "true");
+    if (exception) params.set("exception", exception);
     const res = await fetch(`/api/olympians?${params}`);
     const json = await res.json();
     setData(json);
     setLoading(false);
-  }, [q, country, source, hasEmail, campaign, yearMin, yearMax, multiYear]);
+  }, [q, country, source, hasEmail, campaign, yearMin, yearMax, multiYear, exception]);
 
   useEffect(() => {
     const t = setTimeout(fetchData, 300);
@@ -141,6 +144,15 @@ export default function PeoplePage() {
     window.location.href = `/enrich?ids=${Array.from(selected).join(",")}`;
   };
 
+  const toggleException = async (id: string, current: boolean) => {
+    await fetch("/api/olympians", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, exception: !current }),
+    });
+    fetchData();
+  };
+
   const handleSaveCopy = async (id: string, customCopy: string) => {
     await fetch("/api/olympians", {
       method: "PATCH",
@@ -172,6 +184,11 @@ export default function PeoplePage() {
       </td>
       <td className="px-3 py-2">{o.w26Outreach ? "✅" : ""}</td>
       <td className="px-3 py-2">{o.spring26Status || (o.spring26Outreach ? "Queued" : "")}</td>
+      <td className="px-3 py-2">
+        <button onClick={(e) => { e.stopPropagation(); toggleException(o.id, o.exception); }} className={`text-xs px-1.5 py-0.5 rounded ${o.exception ? "bg-red-100 text-red-700" : "text-gray-300 hover:text-gray-500"}`}>
+          {o.exception ? "🚫" : "—"}
+        </button>
+      </td>
     </tr>
   );
 
@@ -188,6 +205,7 @@ export default function PeoplePage() {
         <th className="px-3 py-2 text-left">Copy</th>
         <th className="px-3 py-2 text-left">W26</th>
         <th className="px-3 py-2 text-left">Spring26</th>
+        <th className="px-3 py-2 text-left">Exc.</th>
       </tr>
     </thead>
   );
@@ -219,6 +237,11 @@ export default function PeoplePage() {
           <option value="w26">W26 sent</option>
           <option value="spring26">Spring26 queued</option>
           <option value="none">Never contacted</option>
+        </select>
+        <select value={exception} onChange={(e) => setException(e.target.value)} className="border rounded px-2 py-1.5 text-sm">
+          <option value="false">No exceptions</option>
+          <option value="">All people</option>
+          <option value="true">Exceptions only</option>
         </select>
       </div>
 

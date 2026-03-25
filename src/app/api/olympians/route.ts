@@ -15,6 +15,7 @@ export async function GET(req: Request) {
   const yearMax = searchParams.get("yearMax");
   const multiYear = searchParams.get("multiYear");
   const hasCustomCopy = searchParams.get("hasCustomCopy");
+  const exception = searchParams.get("exception");
 
   const allOlympians = await fetchAllOlympians();
 
@@ -45,6 +46,8 @@ export async function GET(req: Request) {
   if (multiYear === "true") filtered = filtered.filter((o) => o.appearances > 1);
   if (hasCustomCopy === "true") filtered = filtered.filter((o) => !!o.spring26Outreach);
   if (hasCustomCopy === "false") filtered = filtered.filter((o) => !o.spring26Outreach);
+  if (exception === "true") filtered = filtered.filter((o) => o.exception);
+  if (exception === "false") filtered = filtered.filter((o) => !o.exception);
 
   const countries = [...new Set(filtered.map((o) => o.country).filter(Boolean))].sort();
   const sources = [...new Set(filtered.map((o) => o.source).filter(Boolean))].sort();
@@ -67,6 +70,7 @@ export async function PATCH(req: Request) {
   const fields: Record<string, unknown> = {};
   if (spring26Outreach !== undefined) fields["Spring26 Outreach"] = spring26Outreach || "";
   if (personalEmail !== undefined) fields["Personal Email"] = personalEmail;
+  if (body.exception !== undefined) fields["Exception"] = body.exception;
 
   await updateOlympian(id, fields);
   return NextResponse.json({ ok: true });
