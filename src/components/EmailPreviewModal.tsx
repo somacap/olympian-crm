@@ -10,6 +10,7 @@ interface Props {
     source: string;
     spring26Outreach: string;
     spring26Body: string;
+    spring26BodyHtml: string;
   };
   onClose: () => void;
   onSave: (id: string, customCopy: string) => void;
@@ -65,7 +66,7 @@ export default function EmailPreviewModal({ olympian, onClose, onSave }: Props) 
               placeholder="Write custom outreach copy for this person..."
             />
           ) : (
-            <div className="bg-gray-50 rounded-lg p-4 text-sm whitespace-pre-wrap">{displayBody}</div>
+            <div className="bg-gray-50 rounded-lg p-4 text-sm" dangerouslySetInnerHTML={{ __html: isCustom ? displayBody.replace(/\n/g, "<br>") : olympian.spring26BodyHtml }} />
           )}
         </div>
 
