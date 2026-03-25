@@ -16,9 +16,13 @@ interface LogEntry {
   found?: number;
   notFound?: number;
   message?: string;
+  olympianSource?: string;
+  year?: number;
 }
 
 interface FoundResult {
+  olympianSource: string;
+  year: number;
   recordId: string;
   name: string;
   email: string;
@@ -115,7 +119,7 @@ function EnrichContent() {
                 recordId: data.recordId,
                 name: data.name,
                 email: data.email,
-                source: data.step,
+                source: data.step, olympianSource: data.olympianSource || "", year: data.year || 0,
                 pushed: false,
                 pushing: false,
               }]);
@@ -201,7 +205,9 @@ function EnrichContent() {
                       <th className="px-4 py-2 text-left">Current Email</th>
                       <th className="px-4 py-2 text-left">LinkedIn</th>
                       <th className="px-4 py-2 text-left">Country</th>
-                      <th className="px-4 py-2 text-left">Source</th>
+                      <th className="px-4 py-2 text-left">Enrichment</th>
+                <th className="px-4 py-2 text-left">Source</th>
+                <th className="px-4 py-2 text-left">Year</th>
                       <th className="px-4 py-2 text-left">Year</th>
                     </tr>
                   </thead>
@@ -271,7 +277,9 @@ function EnrichContent() {
               <tr>
                 <th className="px-4 py-2 text-left">Name</th>
                 <th className="px-4 py-2 text-left">Email Found</th>
+                <th className="px-4 py-2 text-left">Enrichment</th>
                 <th className="px-4 py-2 text-left">Source</th>
+                <th className="px-4 py-2 text-left">Year</th>
                 <th className="px-4 py-2 text-left">Airtable</th>
               </tr>
             </thead>
@@ -281,6 +289,8 @@ function EnrichContent() {
                   <td className="px-4 py-2 font-medium">{r.name}</td>
                   <td className="px-4 py-2 font-mono text-xs">{r.email}</td>
                   <td className="px-4 py-2 text-gray-500">{r.source}</td>
+                  <td className="px-4 py-2 text-gray-500">{r.olympianSource}</td>
+                  <td className="px-4 py-2 text-gray-500">{r.year || ""}</td>
                   <td className="px-4 py-2">
                     {r.pushed ? (
                       <span className="text-green-600 text-xs">✅ Pushed</span>
@@ -309,7 +319,7 @@ function EnrichContent() {
               <span className="flex-shrink-0">{getStatusIcon(entry)}</span>
               <div>
                 {entry.name && <span className="font-medium">{entry.name}</span>}
-                {entry.step && <span className="text-xs ml-1 opacity-60">[{entry.step}]</span>}
+                {entry.step && <span className="text-xs ml-1 opacity-60">[{entry.step}]</span>}{entry.olympianSource && <span className="text-xs ml-1 text-gray-400">{entry.olympianSource}{entry.year ? ` '${String(entry.year).slice(-2)}` : ""}</span>}
                 {entry.email && <span className="ml-2 font-mono text-xs bg-green-100 px-1.5 py-0.5 rounded">{entry.email}</span>}
                 {entry.reasoning && <div className="text-xs opacity-75 mt-0.5">{linkify(entry.reasoning)}</div>}
                 {entry.message && !entry.name && <span>{entry.message}</span>}

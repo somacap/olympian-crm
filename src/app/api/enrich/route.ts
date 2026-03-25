@@ -39,7 +39,7 @@ export async function POST(req: Request) {
           send({
             type: "skip",
             index: i,
-            recordId: o.id,
+            recordId: o.id, olympianSource: o.source, year: o.year,
             name: o.name,
             email: o.email,
             reasoning: "Already has email on file",
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
         send({
           type: "progress",
           index: i,
-          recordId: o.id,
+          recordId: o.id, olympianSource: o.source, year: o.year,
           name: o.name,
           step: "apollo",
           status: "searching",
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
           send({
             type: "found",
             index: i,
-            recordId: o.id,
+            recordId: o.id, olympianSource: o.source, year: o.year,
             name: o.name,
             step: "apollo",
             email: apolloResult.email,
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
             send({
               type: "airtable_sync",
               index: i,
-              recordId: o.id,
+              recordId: o.id, olympianSource: o.source, year: o.year,
               name: o.name,
               reasoning: `Pushed ${apolloResult.email} to Airtable`,
             });
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
         send({
           type: "progress",
           index: i,
-          recordId: o.id,
+          recordId: o.id, olympianSource: o.source, year: o.year,
           name: o.name,
           step: "apollo",
           status: "not_found",
@@ -101,7 +101,7 @@ export async function POST(req: Request) {
         send({
           type: "progress",
           index: i,
-          recordId: o.id,
+          recordId: o.id, olympianSource: o.source, year: o.year,
           name: o.name,
           step: "exa",
           status: "searching",
@@ -114,7 +114,7 @@ export async function POST(req: Request) {
           send({
             type: "found",
             index: i,
-            recordId: o.id,
+            recordId: o.id, olympianSource: o.source, year: o.year,
             name: o.name,
             step: "exa",
             email: exaResult.email,
@@ -126,7 +126,7 @@ export async function POST(req: Request) {
             send({
               type: "airtable_sync",
               index: i,
-              recordId: o.id,
+              recordId: o.id, olympianSource: o.source, year: o.year,
               name: o.name,
               reasoning: `Pushed ${exaResult.email} to Airtable`,
             });
@@ -139,7 +139,7 @@ export async function POST(req: Request) {
         send({
           type: "not_found",
           index: i,
-          recordId: o.id,
+          recordId: o.id, olympianSource: o.source, year: o.year,
           name: o.name,
           step: "exa",
           reasoning: exaResult.reasoning,
