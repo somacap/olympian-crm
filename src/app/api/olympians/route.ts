@@ -61,9 +61,13 @@ export async function GET(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const { id, spring26Outreach } = await req.json();
+  const { id, spring26Outreach, personalEmail } = await req.json();
   if (!id) return NextResponse.json({ error: "No ID" }, { status: 400 });
 
-  await updateOlympian(id, { "Spring26 Outreach": spring26Outreach || "" });
+  const fields: Record<string, unknown> = {};
+  if (spring26Outreach !== undefined) fields["Spring26 Outreach"] = spring26Outreach || "";
+  if (personalEmail !== undefined) fields["Personal Email"] = personalEmail;
+
+  await updateOlympian(id, fields);
   return NextResponse.json({ ok: true });
 }
